@@ -140,6 +140,14 @@ jobs:
             --recovery "${{ inputs.recovery }}" \
             --gpu-max "${{ inputs.gpu_max }}"
 
+      - name: Force Update KernelSU-Next to latest v3.4.2 (next-legacy)
+        run: |
+          cd drivers/kernelsu || cd KernelSU-Next || true
+          git remote set-url origin https://github.com || true
+          git fetch origin
+          git checkout origin/next-legacy || git checkout v3.4.2
+          cd ../..
+
       - name: ccache stats after build
         run: ccache -s
 
