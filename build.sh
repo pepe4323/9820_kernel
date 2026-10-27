@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm -rf drivers/kernelsu
+git clone https://github.com -b v3.4.0 drivers/kernelsu
+
 abort()
 {
     cd -
