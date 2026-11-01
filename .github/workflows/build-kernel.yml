@@ -104,19 +104,25 @@ jobs:
       - name: Remove Old KernelSU & Setup KernelSU Next v3.4.2
         if: ${{ inputs.include_ksu == 'y' && inputs.recovery == 'n' }}
         run: |
-          echo "Odstraňujem starú inštaláciu KernelSU..."
+          echo "Odstraňujem starú inštaláciu KernelSU a konfliktné priečinky..."
+          # Zmažeme staré ovládače ak existujú
           if [ -d "drivers/kernelsu" ]; then
             git rm -rf drivers/kernelsu || rm -rf drivers/kernelsu
+          fi
+          
+          # VYMAZANIE KONFLIKTNÉHO PRIEČINKA, KTORÝ SPÔSOBOVAL CHYBU 128
+          if [ -d "KernelSU-Next" ]; then
+            git rm -rf KernelSU-Next || rm -rf KernelSU-Next
           fi
           
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/kernelsu/d' drivers/Kconfig
 
           echo "Inštalujem KernelSU Next v3.4.2..."
-          # Stiahneme priamo tag v3.4.2 ako čistý priečinok do drivers/kernelsu
-          git clone https://github.com/KernelSU-Next/KernelSU-Next
+          # Klonujeme čistú verziu priamo do drivers/kernelsu
+          git clone https://github.com drivers/kernelsu
           
-          # 2. Prejdeme do stiahnutého priečinka, stiahneme tagy a prepneme sa na tag v3.4.2
+          # Prepneme sa na správny tag v3.4.2
           cd drivers/kernelsu
           git fetch --tags
           git checkout tags/v3.4.2
@@ -133,6 +139,7 @@ jobs:
             sed -i '/CONFIG_KSU/d' $DEFCONFIG
             echo "CONFIG_KSU=y" >> $DEFCONFIG
             echo "CONFIG_KSU_NEXT=y" >> $DEFCONFIG
+            echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG
             echo "CONFIG_KALLSYMS=y" >> $DEFCONFIG
             echo "CONFIG_KALLSYMS_ALL=y" >> $DEFCONFIG
           else
