@@ -105,12 +105,13 @@ jobs:
         if: ${{ inputs.include_ksu == 'y' && inputs.recovery == 'n' }}
         run: |
           echo "Odstraňujem starú inštaláciu KernelSU a konfliktné priečinky..."
-          # Zmažeme staré ovládače ak existujú
-          if [ -d "drivers/kernelsu" ]; then
+          
+          # 1. Odstránenie starého symlinku alebo ovládačov
+          if [ -d "drivers/kernelsu" ] || [ -L "drivers/kernelsu" ]; then
             git rm -rf drivers/kernelsu || rm -rf drivers/kernelsu
           fi
           
-          # VYMAZANIE KONFLIKTNÉHO PRIEČINKA, KTORÝ SPÔSOBOVAL CHYBU 128
+          # 2. ODSTRÁNENIE STARÉHO PRIEČINKA, KTORÝ BLOKUJE OFICIÁLNY SKRIPT
           if [ -d "KernelSU-Next" ]; then
             git rm -rf KernelSU-Next || rm -rf KernelSU-Next
           fi
@@ -118,19 +119,9 @@ jobs:
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/kernelsu/d' drivers/Kconfig
 
-          echo "Inštalujem KernelSU Next v3.4.2..."
-          # Klonujeme čistú verziu priamo do drivers/kernelsu
-          git clone https://github.com drivers/kernelsu
-          
-          # Prepneme sa na správny tag v3.4.2
-          cd drivers/kernelsu
-          git fetch --tags
-          git checkout tags/v3.4.2
-          cd ../..
-
-          # Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig
-          echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
-          echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
+          echo "Inštalujem KernelSU Next v3.4.2 pomocou oficiálneho skriptu..."
+          # PRESNE VÁŠ POŽADOVANÝ PRÍKAZ
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s v3.4.2
 
           # Konfigurácia upravená pre váš súbor exynos9820_defconfig
           DEFCONFIG="arch/arm64/configs/exynos9820_defconfig"
