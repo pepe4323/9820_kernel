@@ -114,7 +114,7 @@ jobs:
 
           echo "Inštalujem KernelSU Next v3.4.2..."
           # Stiahneme priamo tag v3.4.2 ako čistý priečinok do drivers/kernelsu
-          git clone https://github.com drivers/kernelsu
+          git clone https://github.com/KernelSU-Next/KernelSU-Next
           
           # 2. Prejdeme do stiahnutého priečinka, stiahneme tagy a prepneme sa na tag v3.4.2
           cd drivers/kernelsu
