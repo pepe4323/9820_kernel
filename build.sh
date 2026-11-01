@@ -6,7 +6,7 @@ sed -i '/kernelsu/d' drivers/Makefile
 sed -i '/kernelsu/d' drivers/Kconfig
 
 # Stiahnutie a inštalácia správnej verzie KernelSU Next v3.4.2 priamo v skripte!
-git clone https://github.com drivers/kernelsu
+git clone https://github.com/KernelSU-Next/KernelSU-Next
 cd drivers/kernelsu
 git fetch --tags
 git checkout tags/v3.4.2
