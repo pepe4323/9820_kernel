@@ -6,11 +6,25 @@ sed -i '/kernelsu/d' drivers/Kconfig
 curl -LSs "https://githubusercontent.com" | bash -s v3.4.2
 
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
+
+# Vyčistenie starých konfliktov
 sed -i '/CONFIG_KSU/d' "$DEFCONFIG_FILE"
+sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$DEFCONFIG_FILE"
+sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$DEFCONFIG_FILE"
+sed -i '/CONFIG_TIMA/d' "$DEFCONFIG_FILE"
+sed -i '/CONFIG_UH_RKP/d' "$DEFCONFIG_FILE"
+
+# Zápis potrebných vlajok pre KernelSU Next
 echo "CONFIG_KSU=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KSU_NEXT=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KALLSYMS=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KALLSYMS_ALL=y" >> "$DEFCONFIG_FILE"
+
+# Vypnutie Samsung ochrán jadra, ktoré blokujú Root
+echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$DEFCONFIG_FILE"
+echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$DEFCONFIG_FILE"
+echo "# CONFIG_TIMA is not set" >> "$DEFCONFIG_FILE"
+echo "# CONFIG_UH_RKP is not set" >> "$DEFCONFIG_FILE"
 
 abort()
 {
