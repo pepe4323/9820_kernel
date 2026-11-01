@@ -1,29 +1,17 @@
-name: Build Kernel
+name: Build Kernel (S10e with KernelSU Next)
 
 on:
   workflow_dispatch:
     inputs:
       model:
-        description: Model (code + device name)
+        description: "Select target model"
         required: true
-        default: beyondx (Galaxy S10 5G)
+        default: "beyond0lte (Galaxy S10e)"
         type: choice
         options:
-          - beyond0lte (Galaxy S10e)
-          - beyond0lteks (Galaxy S10e Korea)
-          - beyond1lte (Galaxy S10)
-          - beyond1lteks (Galaxy S10 Korea)
-          - beyond2lte (Galaxy S10+)
-          - beyond2lteks (Galaxy S10+ Korea)
-          - beyondx (Galaxy S10 5G)
-          - beyondxks (Galaxy S10 5G Korea)
-          - d1 (Galaxy Note10)
-          - d1xks (Galaxy Note10 5G)
-          - d2s (Galaxy Note10+)
-          - d2x (Galaxy Note10+ 5G)
-          - d2xks (Galaxy Note10+ 5G Korea)
+          - "beyond0lte (Galaxy S10e)"
       include_ksu:
-        description: Include KernelSU
+        description: Include KernelSU Next
         required: true
         default: y
         type: choice
@@ -113,6 +101,34 @@ jobs:
             zip \
             zstd
 
+      - name: Remove Old KernelSU & Setup KernelSU Next v3.4.2
+        if: ${{ inputs.include_ksu == 'y' && inputs.recovery == 'n' }}
+        run: |
+          echo "Odstraňujem starú inštaláciu KernelSU..."
+          if [ -d "drivers/kernelsu" ]; then
+            git rm -rf drivers/kernelsu || rm -rf drivers/kernelsu
+          fi
+          
+          sed -i '/kernelsu/d' drivers/Makefile
+          sed -i '/kernelsu/d' drivers/Kconfig
+
+          echo "Inštalujem KernelSU Next v3.4.2..."
+          curl -LSs "https://githubusercontent.com" | bash -s v3.4.2
+
+          # Konfigurácia upravená pre váš súbor exynos9820_defconfig
+          DEFCONFIG="arch/arm64/configs/exynos9820_defconfig"
+          if [ -f "$DEFCONFIG" ]; then
+            echo "Pridávam KernelSU Next konfigurácie do $DEFCONFIG"
+            sed -i '/CONFIG_KSU/d' $DEFCONFIG
+            echo "CONFIG_KSU=y" >> $DEFCONFIG
+            echo "CONFIG_KSU_NEXT=y" >> $DEFCONFIG
+            echo "CONFIG_KALLSYMS=y" >> $DEFCONFIG
+            echo "CONFIG_KALLSYMS_ALL=y" >> $DEFCONFIG
+          else
+             echo "CHYBA: Súbor $DEFCONFIG nebol nájdený!"
+             exit 1
+          fi
+
       - name: Restore compiler cache
         uses: actions/cache@v4
         with:
@@ -139,11 +155,6 @@ jobs:
             --ksu "${{ inputs.include_ksu }}" \
             --recovery "${{ inputs.recovery }}" \
             --gpu-max "${{ inputs.gpu_max }}"
-
-      - name: Clean and Fresh Clone KernelSU-Next v3.4.2
-        run: |
-          rm -rf drivers/kernelsu
-          git clone --depth 1 --branch v3.4.2 https://github.com drivers/kernelsu
 
       - name: ccache stats after build
         run: ccache -s
