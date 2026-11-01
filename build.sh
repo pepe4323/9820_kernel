@@ -1,7 +1,16 @@
 #!/bin/bash
 
 rm -rf drivers/kernelsu
-git clone https://github.com -b v3.4.0 drivers/kernelsu
+sed -i '/kernelsu/d' drivers/Makefile
+sed -i '/kernelsu/d' drivers/Kconfig
+curl -LSs "https://githubusercontent.com" | bash -s v3.4.2
+
+DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
+sed -i '/CONFIG_KSU/d' "$DEFCONFIG_FILE"
+echo "CONFIG_KSU=y" >> "$DEFCONFIG_FILE"
+echo "CONFIG_KSU_NEXT=y" >> "$DEFCONFIG_FILE"
+echo "CONFIG_KALLSYMS=y" >> "$DEFCONFIG_FILE"
+echo "CONFIG_KALLSYMS_ALL=y" >> "$DEFCONFIG_FILE"
 
 abort()
 {
