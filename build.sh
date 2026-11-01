@@ -1,23 +1,39 @@
 #!/bin/bash
 
-# Zápis vlajok do defconfigu
+# Definícia všetkých konfiguračných súborov
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
-sed -i '/CONFIG_KSU/d' "$DEFCONFIG_FILE"
-sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$DEFCONFIG_FILE"
-sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$DEFCONFIG_FILE"
-sed -i '/CONFIG_TIMA/d' "$DEFCONFIG_FILE"
-sed -i '/CONFIG_UH_RKP/d' "$DEFCONFIG_FILE"
+MODEL_CONFIG="arch/arm64/configs/beyond0lte.config"
+KSU_CONFIG="ksu.config"
 
-echo "CONFIG_KSU=y" >> "$DEFCONFIG_FILE"
-echo "CONFIG_KSU_NEXT=y" >> "$DEFCONFIG_FILE"
-echo "CONFIG_KSU_SUSFS=y" >> "$DEFCONFIG_FILE"
-echo "CONFIG_KALLSYMS=y" >> "$DEFCONFIG_FILE"
-echo "CONFIG_KALLSYMS_ALL=y" >> "$DEFCONFIG_FILE"
+# Vyčistíme staré zápisy zo všetkých súborov
+for FILE in "$DEFCONFIG_FILE" "$MODEL_CONFIG" "$KSU_CONFIG"; do
+    if [ -f "$FILE" ] || [ "$FILE" = "$KSU_CONFIG" ]; then
+        sed -i '/CONFIG_KSU/d' "$FILE" 2>/dev/null || true
+        sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$FILE" 2>/dev/null || true
+        sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$FILE" 2>/dev/null || true
+        sed -i '/CONFIG_TIMA/d' "$FILE" 2>/dev/null || true
+        sed -i '/CONFIG_UH_RKP/d' "$FILE" 2>/dev/null || true
+        sed -i '/CONFIG_KALLSYMS/d' "$FILE" 2>/dev/null || true
+    fi
+done
 
-echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$DEFCONFIG_FILE"
-echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$DEFCONFIG_FILE"
-echo "# CONFIG_TIMA is not set" >> "$DEFCONFIG_FILE"
-echo "# CONFIG_UH_RKP is not set" >> "$DEFCONFIG_FILE"
+# Vytvoríme čistý ksu.config a naplníme ho prioritnými vlajkami
+echo "CONFIG_KSU=y" > "$KSU_CONFIG"
+echo "CONFIG_KSU_NEXT=y" >> "$KSU_CONFIG"
+echo "CONFIG_KSU_SUSFS=y" >> "$KSU_CONFIG"
+echo "CONFIG_KALLSYMS=y" >> "$KSU_CONFIG"
+echo "CONFIG_KALLSYMS_ALL=y" >> "$KSU_CONFIG"
+echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$KSU_CONFIG"
+echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$KSU_CONFIG"
+echo "# CONFIG_TIMA is not set" >> "$KSU_CONFIG"
+echo "# CONFIG_UH_RKP is not set" >> "$KSU_CONFIG"
+
+# Pre istotu tie isté vlajky poistíme na koniec defconfigu a model configu
+for FILE in "$DEFCONFIG_FILE" "$MODEL_CONFIG"; do
+    if [ -f "$FILE" ]; then
+        cat "$KSU_CONFIG" >> "$FILE"
+    fi
+done
 
 abort()
 {
