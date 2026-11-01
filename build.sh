@@ -1,27 +1,6 @@
 #!/bin/bash
 
-# 1. Kompletné vyčistenie starých konfliktov
-rm -rf drivers/kernelsu
-rm -rf drivers/ksu_temp
-sed -i '/kernelsu/d' drivers/Makefile
-sed -i '/kernelsu/d' drivers/Kconfig
-
-# 2. Nepriestrelné stiahnutie KernelSU Next v3.4.2 ako hotového archívu (úplne bez git clone)
-curl -LSs "https://github.com" -o ksu342.tar.gz
-mkdir -p drivers/ksu_temp
-tar -xzf ksu342.tar.gz -C drivers/ksu_temp --strip-components=1
-rm -f ksu342.tar.gz
-
-# 3. Presun kódovej bázy z podadresára kernel do ovládačov
-mkdir -p drivers/kernelsu
-cp -r drivers/ksu_temp/kernel/* drivers/kernelsu/
-rm -rf drivers/ksu_temp
-
-# 4. Manuálny zápis prepojení pre zostavu
-echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
-echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
-
-# 5. Zápis vlajok do defconfigu
+# Zápis vlajok do defconfigu
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
 sed -i '/CONFIG_KSU/d' "$DEFCONFIG_FILE"
 sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$DEFCONFIG_FILE"
