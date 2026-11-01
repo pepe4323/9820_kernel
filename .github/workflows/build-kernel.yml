@@ -106,22 +106,24 @@ jobs:
         run: |
           echo "Čistím staré ovládače a konfliktné zložky..."
           rm -rf drivers/kernelsu
-          rm -rf drivers/ksu_temp
           rm -rf KernelSU-Next
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/kernelsu/d' drivers/Kconfig
 
-          echo "Sťahujem overený archív KernelSU Next v3.4.2..."
-          curl -H "User-Agent: Mozilla/5.0" -L "https://github.com" -o ksu.tar.gz
+          echo "Klonujem KernelSU Next..."
+          # Čisté stiahnutie repozitára priamo z GitHubu
+          git clone https://github.com KernelSU-Next
           
-          mkdir -p drivers/ksu_temp
-          tar -xzf ksu.tar.gz -C drivers/ksu_temp --strip-components=1
-          rm -f ksu.tar.gz
+          echo "Prepínam na tag v3.4.2..."
+          cd KernelSU-Next
+          git fetch --tags
+          git checkout tags/v3.4.2
+          cd ..
 
           echo "Presúvam kód do štruktúry ovládačov..."
           mkdir -p drivers/kernelsu
-          cp -r drivers/ksu_temp/kernel/* drivers/kernelsu/
-          rm -rf drivers/ksu_temp
+          cp -r KernelSU-Next/kernel/* drivers/kernelsu/
+          rm -rf KernelSU-Next
 
           echo "Vytváram stabilné prepojenia v Makefile a Kconfig..."
           echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
