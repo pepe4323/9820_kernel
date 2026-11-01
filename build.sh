@@ -213,6 +213,52 @@ done
 echo "Preparing the build environment..."
 
 pushd $(dirname "$0") > /dev/null
+# VYNÚTENIE KSU KONFIGURÁCIE NA SPRÁVNOM MIESTE (PO PUSHD)
+KSU_CONFIG_PATH="$PWD/arch/arm64/configs/ksu.config"
+DEFCONFIG_PATH="$PWD/arch/arm64/configs/exynos9820_defconfig"
+MODEL_CONFIG_PATH="$PWD/arch/arm64/configs/beyond0lte.config"
+
+# Cesty k Makefile a Kconfig ovládačov
+DRIVERS_MAKEFILE="$PWD/drivers/Makefile"
+DRIVERS_KCONFIG="$PWD/drivers/Kconfig"
+
+echo "-----------------------------------------------"
+echo "Vynucujem KernelSU Next v3.4.2..."
+echo "-----------------------------------------------"
+
+# 1. Vyčistíme staré zápisy konfigurácií
+for CONF_FILE in "$KSU_CONFIG_PATH" "$DEFCONFIG_PATH" "$MODEL_CONFIG_PATH"; do
+    if [ -f "$CONF_FILE" ]; then
+        sed -i '/CONFIG_KSU/d' "$CONF_FILE"
+        sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$CONF_FILE"
+        sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$CONF_FILE"
+        sed -i '/CONFIG_TIMA/d' "$CONF_FILE"
+        sed -i '/CONFIG_UH_RKP/d' "$CONF_FILE"
+        sed -i '/CONFIG_KALLSYMS/d' "$CONF_FILE"
+    fi
+done
+
+# 2. Vytvoríme čistý ksu.config s prioritnými vlajkami
+echo "CONFIG_KSU=y" > "$KSU_CONFIG_PATH"
+echo "CONFIG_KSU_NEXT=y" >> "$KSU_CONFIG_PATH"
+echo "CONFIG_KSU_SUSFS=y" >> "$KSU_CONFIG_PATH"
+echo "CONFIG_KALLSYMS=y" >> "$KSU_CONFIG_PATH"
+echo "CONFIG_KALLSYMS_ALL=y" >> "$KSU_CONFIG_PATH"
+echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$KSU_CONFIG_PATH"
+echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$KSU_CONFIG_PATH"
+echo "# CONFIG_TIMA is not set" >> "$KSU_CONFIG_PATH"
+echo "# CONFIG_UH_RKP is not set" >> "$KSU_CONFIG_PATH"
+
+# 3. Poistíme rovnaké vlajky na koniec defconfigu a modelu
+cat "$KSU_CONFIG_PATH" >> "$DEFCONFIG_PATH"
+cat "$KSU_CONFIG_PATH" >> "$MODEL_CONFIG_PATH"
+
+# 4. ABSOLÚTNE POISTENIE PREPOJENIA OVLÁDAČOV (ZABRÁNI BROKEN PIPE)
+sed -i '/kernelsu/d' "$DRIVERS_MAKEFILE"
+sed -i '/kernelsu/d' "$DRIVERS_KCONFIG"
+
+echo "obj-\$(CONFIG_KSU) += kernelsu/" >> "$DRIVERS_MAKEFILE"
+sed -i '/endmenu/i\source "drivers/kernelsu/Kconfig"' "$DRIVERS_KCONFIG"
 CORES=`cat /proc/cpuinfo | grep -c processor`
 
 # Define toolchain variables
