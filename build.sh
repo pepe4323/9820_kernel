@@ -1,38 +1,40 @@
 #!/bin/bash
 
-# Odstránenie starých konfliktov
+# 1. Kompletné vyčistenie starých konfliktov
 rm -rf drivers/kernelsu
+rm -rf drivers/ksu_temp
 sed -i '/kernelsu/d' drivers/Makefile
 sed -i '/kernelsu/d' drivers/Kconfig
 
-# Stiahnutie presného tagu v3.4.2 na jedno kliknutie bez prepínania adresárov (cd)
-git clone --depth 1 --branch v3.4.2 https://github.com drivers/kernelsu
+# 2. Nepriestrelné stiahnutie KernelSU Next v3.4.2 ako hotového archívu (úplne bez git clone)
+curl -LSs "https://github.com" -o ksu342.tar.gz
+mkdir -p drivers/ksu_temp
+tar -xzf ksu342.tar.gz -C drivers/ksu_temp --strip-components=1
+rm -f ksu342.tar.gz
 
-# 2. Presunieme dôležitý obsah podadresára kernel do finálneho priečinka drivers/kernelsu
+# 3. Presun kódovej bázy z podadresára kernel do ovládačov
 mkdir -p drivers/kernelsu
 cp -r drivers/ksu_temp/kernel/* drivers/kernelsu/
 rm -rf drivers/ksu_temp
 
-# Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig
+# 4. Manuálny zápis prepojení pre zostavu
 echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
 echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
 
+# 5. Zápis vlajok do defconfigu
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
-
-# Vyčistenie starých konfliktov
 sed -i '/CONFIG_KSU/d' "$DEFCONFIG_FILE"
 sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$DEFCONFIG_FILE"
 sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$DEFCONFIG_FILE"
 sed -i '/CONFIG_TIMA/d' "$DEFCONFIG_FILE"
 sed -i '/CONFIG_UH_RKP/d' "$DEFCONFIG_FILE"
 
-# Zápis potrebných vlajok pre KernelSU Next
 echo "CONFIG_KSU=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KSU_NEXT=y" >> "$DEFCONFIG_FILE"
+echo "CONFIG_KSU_SUSFS=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KALLSYMS=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_KALLSYMS_ALL=y" >> "$DEFCONFIG_FILE"
 
-# Vypnutie Samsung ochrán jadra, ktoré blokujú Root
 echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$DEFCONFIG_FILE"
 echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$DEFCONFIG_FILE"
 echo "# CONFIG_TIMA is not set" >> "$DEFCONFIG_FILE"
