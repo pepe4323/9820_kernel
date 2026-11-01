@@ -114,9 +114,15 @@ jobs:
 
           echo "Inštalujem KernelSU Next v3.4.2..."
           # Stiahneme priamo tag v3.4.2 ako čistý priečinok do drivers/kernelsu
-          git clone https://github.com/rifsxd/KernelSU-Next.git -b v3.4.2 drivers/kernelsu
+          git clone https://github.com drivers/kernelsu
+          
+          # 2. Prejdeme do stiahnutého priečinka, stiahneme tagy a prepneme sa na tag v3.4.2
+          cd drivers/kernelsu
+          git fetch --tags
+          git checkout tags/v3.4.2
+          cd ../..
 
-          # Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig, ktoré skript vyžaduje
+          # Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig
           echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
           echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
 
