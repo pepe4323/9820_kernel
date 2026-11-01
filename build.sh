@@ -420,6 +420,33 @@ echo "Generating configuration file..."
 echo "-----------------------------------------------"
 make "${MAKE_ARGS[@]}" -j$CORES exynos9820_defconfig $MODEL.config $KSU $RECOVERY || abort
 
+echo "-----------------------------------------------"
+echo "Zápis KernelSU Next priamo do finálnej konfigurácie..."
+echo "-----------------------------------------------"
+
+for FINAL_CONFIG in "out/.config" ".config"; do
+    if [ -f "$FINAL_CONFIG" ]; then
+        sed -i '/CONFIG_KSU/d' "$FINAL_CONFIG"
+        sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$FINAL_CONFIG"
+        sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$FINAL_CONFIG"
+        sed -i '/CONFIG_TIMA/d' "$FINAL_CONFIG"
+        sed -i '/CONFIG_UH_RKP/d' "$FINAL_CONFIG"
+        sed -i '/CONFIG_KALLSYMS/d' "$FINAL_CONFIG"
+        
+        echo "CONFIG_KSU=y" >> "$FINAL_CONFIG"
+        echo "CONFIG_KSU_NEXT=y" >> "$FINAL_CONFIG"
+        echo "CONFIG_KSU_SUSFS=y" >> "$FINAL_CONFIG"
+        echo "CONFIG_KALLSYMS=y" >> "$FINAL_CONFIG"
+        echo "CONFIG_KALLSYMS_ALL=y" >> "$FINAL_CONFIG"
+        echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> "$FINAL_CONFIG"
+        echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$FINAL_CONFIG"
+        echo "# CONFIG_TIMA is not set" >> "$FINAL_CONFIG"
+        echo "# CONFIG_UH_RKP is not set" >> "$FINAL_CONFIG"
+    fi
+done
+
+make "${MAKE_ARGS[@]}" olddefconfig || true
+
 echo "Building kernel..."
 echo "-----------------------------------------------"
 make "${MAKE_ARGS[@]}" -j$CORES || abort
