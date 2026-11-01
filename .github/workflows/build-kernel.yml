@@ -104,6 +104,12 @@ jobs:
       - name: Remove Old KernelSU & Setup KernelSU Next v3.4.2
         if: ${{ inputs.include_ksu == 'y' && inputs.recovery == 'n' }}
         run: |
+          echo "Vypínam prekrúcanie adries v konfigurácii Gitu..."
+          # Tieto príkazy vymažú akékoľvek vynútené prepisovanie URL adries
+          git config --global --unset-all url.https://github.com || true
+          git config --global --unset-all url.git@github.com:.insteadof || true
+          git config --global --unset-all url.https://github.com || true
+
           echo "Čistím staré ovládače a konfliktné zložky..."
           rm -rf drivers/kernelsu
           rm -rf KernelSU-Next
@@ -111,8 +117,7 @@ jobs:
           sed -i '/kernelsu/d' drivers/Kconfig
 
           echo "Klonujem KernelSU Next..."
-          # Čisté stiahnutie repozitára priamo z GitHubu
-          git clone https://github.com KernelSU-Next
+          git clone --no-tags https://github.com KernelSU-Next
           
           echo "Prepínam na tag v3.4.2..."
           cd KernelSU-Next
@@ -123,6 +128,8 @@ jobs:
           echo "Presúvam kód do štruktúry ovládačov..."
           mkdir -p drivers/kernelsu
           cp -r KernelSU-Next/kernel/* drivers/kernelsu/
+          mkdir -p drivers/kernelsu/uapi
+          cp -r KernelSU-Next/uapi/* drivers/kernelsu/uapi/
           rm -rf KernelSU-Next
 
           echo "Vytváram stabilné prepojenia v Makefile a Kconfig..."
