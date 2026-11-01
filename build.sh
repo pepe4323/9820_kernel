@@ -1,23 +1,23 @@
 #!/bin/bash
 
-# Definícia všetkých konfiguračných súborov
+# Definícia skutočných ciest ku konfiguračným súborom kernelu
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
 MODEL_CONFIG="arch/arm64/configs/beyond0lte.config"
-KSU_CONFIG="ksu.config"
+KSU_CONFIG="arch/arm64/configs/ksu.config"
 
-# Vyčistíme staré zápisy zo všetkých súborov
+# Vyčistíme staré zápisy zo všetkých súborov na ich reálnych miestach
 for FILE in "$DEFCONFIG_FILE" "$MODEL_CONFIG" "$KSU_CONFIG"; do
-    if [ -f "$FILE" ] || [ "$FILE" = "$KSU_CONFIG" ]; then
-        sed -i '/CONFIG_KSU/d' "$FILE" 2>/dev/null || true
-        sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$FILE" 2>/dev/null || true
-        sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$FILE" 2>/dev/null || true
-        sed -i '/CONFIG_TIMA/d' "$FILE" 2>/dev/null || true
-        sed -i '/CONFIG_UH_RKP/d' "$FILE" 2>/dev/null || true
-        sed -i '/CONFIG_KALLSYMS/d' "$FILE" 2>/dev/null || true
+    if [ -f "$FILE" ]; then
+        sed -i '/CONFIG_KSU/d' "$FILE"
+        sed -i '/CONFIG_SECURITY_SELINUX_DEVELOP/d' "$FILE"
+        sed -i '/CONFIG_ALWAYS_ENFORCING/d' "$FILE"
+        sed -i '/CONFIG_TIMA/d' "$FILE"
+        sed -i '/CONFIG_UH_RKP/d' "$FILE"
+        sed -i '/CONFIG_KALLSYMS/d' "$FILE"
     fi
 done
 
-# Vytvoríme čistý ksu.config a naplníme ho prioritnými vlajkami
+# Prepíšeme ksu.config priamo v arch/arm64/configs/ najnovšími vlajkami
 echo "CONFIG_KSU=y" > "$KSU_CONFIG"
 echo "CONFIG_KSU_NEXT=y" >> "$KSU_CONFIG"
 echo "CONFIG_KSU_SUSFS=y" >> "$KSU_CONFIG"
@@ -28,7 +28,7 @@ echo "# CONFIG_ALWAYS_ENFORCING is not set" >> "$KSU_CONFIG"
 echo "# CONFIG_TIMA is not set" >> "$KSU_CONFIG"
 echo "# CONFIG_UH_RKP is not set" >> "$KSU_CONFIG"
 
-# Pre istotu tie isté vlajky poistíme na koniec defconfigu a model configu
+# Pre absolútnu istotu pridáme rovnaké vlajky aj na koniec defconfigu a modelu
 for FILE in "$DEFCONFIG_FILE" "$MODEL_CONFIG"; do
     if [ -f "$FILE" ]; then
         cat "$KSU_CONFIG" >> "$FILE"
