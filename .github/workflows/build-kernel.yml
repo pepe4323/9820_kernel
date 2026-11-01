@@ -104,40 +104,28 @@ jobs:
       - name: Remove Old KernelSU & Setup KernelSU Next v3.4.2
         if: ${{ inputs.include_ksu == 'y' && inputs.recovery == 'n' }}
         run: |
-          echo "Odstraňujem starú inštaláciu KernelSU a konfliktné priečinky..."
-          
-          # 1. Odstránenie starého symlinku alebo ovládačov
-          if [ -d "drivers/kernelsu" ] || [ -L "drivers/kernelsu" ]; then
-            git rm -rf drivers/kernelsu || rm -rf drivers/kernelsu
-          fi
-          
-          # 2. ODSTRÁNENIE STARÉHO PRIEČINKA, KTORÝ BLOKUJE OFICIÁLNY SKRIPT
-          if [ -d "KernelSU-Next" ]; then
-            git rm -rf KernelSU-Next || rm -rf KernelSU-Next
-          fi
-          
+          echo "Čistím staré ovládače a konfliktné zložky..."
+          rm -rf drivers/kernelsu
+          rm -rf drivers/ksu_temp
+          rm -rf KernelSU-Next
           sed -i '/kernelsu/d' drivers/Makefile
           sed -i '/kernelsu/d' drivers/Kconfig
 
-          echo "Inštalujem KernelSU Next v3.4.2 pomocou oficiálneho skriptu..."
-          # PRESNE VÁŠ POŽADOVANÝ PRÍKAZ
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s v3.4.2
+          echo "Sťahujem overený archív KernelSU Next v3.4.2..."
+          curl -H "User-Agent: Mozilla/5.0" -L "https://github.com" -o ksu.tar.gz
+          
+          mkdir -p drivers/ksu_temp
+          tar -xzf ksu.tar.gz -C drivers/ksu_temp --strip-components=1
+          rm -f ksu.tar.gz
 
-          # Konfigurácia upravená pre váš súbor exynos9820_defconfig
-          DEFCONFIG="arch/arm64/configs/exynos9820_defconfig"
-          MODEL_CONFIG="arch/arm64/configs/${{ steps.model.outputs.model_code }}.config"
-          if [ -f "$DEFCONFIG" ]; then
-            echo "Pridávam KernelSU Next konfigurácie do $DEFCONFIG"
-            sed -i '/CONFIG_KSU/d' $DEFCONFIG
-            echo "CONFIG_KSU=y" >> $DEFCONFIG
-            echo "CONFIG_KSU_NEXT=y" >> $DEFCONFIG
-            echo "CONFIG_KSU_SUSFS=y" >> $DEFCONFIG
-            echo "CONFIG_KALLSYMS=y" >> $DEFCONFIG
-            echo "CONFIG_KALLSYMS_ALL=y" >> $DEFCONFIG
-          else
-             echo "CHYBA: Súbor $DEFCONFIG nebol nájdený!"
-             exit 1
-          fi
+          echo "Presúvam kód do štruktúry ovládačov..."
+          mkdir -p drivers/kernelsu
+          cp -r drivers/ksu_temp/kernel/* drivers/kernelsu/
+          rm -rf drivers/ksu_temp
+
+          echo "Vytváram stabilné prepojenia v Makefile a Kconfig..."
+          echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
+          echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
 
       - name: Restore compiler cache
         uses: actions/cache@v4
