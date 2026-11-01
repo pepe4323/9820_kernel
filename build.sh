@@ -5,14 +5,10 @@ rm -rf drivers/kernelsu
 sed -i '/kernelsu/d' drivers/Makefile
 sed -i '/kernelsu/d' drivers/Kconfig
 
-# Stiahnutie a inštalácia správnej verzie KernelSU Next v3.4.2 priamo v skripte!
-git clone https://github.com/KernelSU-Next/KernelSU-Next
-cd drivers/kernelsu
-git fetch --tags
-git checkout tags/v3.4.2
-cd ../..
+# Stiahnutie presného tagu v3.4.2 na jedno kliknutie bez prepínania adresárov (cd)
+git clone --depth 1 --branch v3.4.2 https://github.com drivers/kernelsu
 
-# Prepojenie do zostavy kernelu
+# Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig
 echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
 echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
 
