@@ -8,6 +8,11 @@ sed -i '/kernelsu/d' drivers/Kconfig
 # Stiahnutie presného tagu v3.4.2 na jedno kliknutie bez prepínania adresárov (cd)
 git clone --depth 1 --branch v3.4.2 https://github.com drivers/kernelsu
 
+# 2. Presunieme dôležitý obsah podadresára kernel do finálneho priečinka drivers/kernelsu
+mkdir -p drivers/kernelsu
+cp -r drivers/ksu_temp/kernel/* drivers/kernelsu/
+rm -rf drivers/ksu_temp
+
 # Manuálne zapíšeme prepojenie do drivers Makefile a Kconfig
 echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
 echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
