@@ -125,6 +125,7 @@ jobs:
 
           # Konfigurácia upravená pre váš súbor exynos9820_defconfig
           DEFCONFIG="arch/arm64/configs/exynos9820_defconfig"
+          MODEL_CONFIG="arch/arm64/configs/${{ steps.model.outputs.model_code }}.config"
           if [ -f "$DEFCONFIG" ]; then
             echo "Pridávam KernelSU Next konfigurácie do $DEFCONFIG"
             sed -i '/CONFIG_KSU/d' $DEFCONFIG
