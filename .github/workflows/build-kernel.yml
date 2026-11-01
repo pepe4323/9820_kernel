@@ -113,7 +113,8 @@ jobs:
           sed -i '/kernelsu/d' drivers/Kconfig
 
           echo "Inštalujem KernelSU Next v3.4.2..."
-          curl -LSs "https://githubusercontent.com" | bash -s v3.4.2
+          curl -LSs "https://raw.githubusercontent.com" | bash -s v3.4.2
+
 
           # Konfigurácia upravená pre váš súbor exynos9820_defconfig
           DEFCONFIG="arch/arm64/configs/exynos9820_defconfig"
