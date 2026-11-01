@@ -1,9 +1,20 @@
 #!/bin/bash
 
+# Odstránenie starých konfliktov
 rm -rf drivers/kernelsu
 sed -i '/kernelsu/d' drivers/Makefile
 sed -i '/kernelsu/d' drivers/Kconfig
-curl -LSs "https://githubusercontent.com" | bash -s v3.4.2
+
+# Stiahnutie a inštalácia správnej verzie KernelSU Next v3.4.2 priamo v skripte!
+git clone https://github.com drivers/kernelsu
+cd drivers/kernelsu
+git fetch --tags
+git checkout tags/v3.4.2
+cd ../..
+
+# Prepojenie do zostavy kernelu
+echo "obj-\$(CONFIG_KSU) += kernelsu/" >> drivers/Makefile
+echo 'source "drivers/kernelsu/Kconfig"' >> drivers/Kconfig
 
 DEFCONFIG_FILE="arch/arm64/configs/exynos9820_defconfig"
 
