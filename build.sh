@@ -418,7 +418,27 @@ echo "-----------------------------------------------"
 echo "Building kernel using "$KERNEL_DEFCONFIG""
 echo "Generating configuration file..."
 echo "-----------------------------------------------"
+# Vytvorenie základnej konfigurácie
 make "${MAKE_ARGS[@]}" -j$CORES exynos9820_defconfig $MODEL.config $KSU $RECOVERY || abort
+
+# ==============================================================================
+# ABSOLÚTNE A KONEČNÉ VYNÚTENIE KERNELSU NEXT V JADRE
+# ==============================================================================
+echo "CONFIG_KSU=y" >> out/.config
+echo "CONFIG_KSU_NEXT=y" >> out/.config
+echo "CONFIG_KSU_SUSFS=y" >> out/.config
+echo "CONFIG_KALLSYMS=y" >> out/.config
+echo "CONFIG_KALLSYMS_ALL=y" >> out/.config
+echo "CONFIG_SECURITY_SELINUX_DEVELOP=y" >> out/.config
+echo "# CONFIG_ALWAYS_ENFORCING is not set" >> out/.config
+
+# Natvrdo injektujeme zapnutie KSU do hlavného Makefile, aby ho kompilátor vynútil
+sed -i '1i\CONFIG_KSU=y\nCONFIG_KSU_NEXT=y\nCONFIG_KSU_SUSFS=y' Makefile
+sed -i '1i\CONFIG_KSU=y\nCONFIG_KSU_NEXT=y\nCONFIG_KSU_SUSFS=y' out/Makefile
+
+# Zjednotenie a potvrdenie konfigurácie
+make "${MAKE_ARGS[@]}" olddefconfig || true
+# ==============================================================================
 
 echo "-----------------------------------------------"
 echo "Zápis KernelSU Next priamo do finálnej konfigurácie..."
